@@ -1,0 +1,709 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OSINT - Plataforma de Datos Públicos</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap"
+        rel="stylesheet">
+
+    <style>
+        :root {
+            --bg-gradient: radial-gradient(circle at 50% 50%, #0d1b2a 0%, #070f18 100%);
+            --panel-bg: rgba(13, 27, 42, 0.45);
+            --panel-border: rgba(255, 255, 255, 0.08);
+            --accent-color: #0072ff;
+            --accent-glow: rgba(0, 114, 255, 0.4);
+            --text-main: #f4f6f9;
+            --text-muted: #8da2bb;
+            --success: #00e676;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg-gradient);
+            color: var(--text-main);
+            min-height: 100vh;
+            overflow-x: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* --- BACKGROUND LINES EFFECT --- */
+        .bg-lines {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+            pointer-events: none;
+            opacity: 0.15;
+            background-image:
+                linear-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255, 255, 255, 0.05) 1px, transparent 1px);
+            background-size: 40px 40px;
+        }
+
+        .bg-glow {
+            position: fixed;
+            width: 600px;
+            height: 600px;
+            background: radial-gradient(circle, rgba(0, 114, 255, 0.12) 0%, transparent 70%);
+            top: 20%;
+            left: 30%;
+            z-index: 0;
+            pointer-events: none;
+            filter: blur(40px);
+        }
+
+        /* --- HEADER --- */
+        header {
+            position: relative;
+            z-index: 10;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1.5rem 3rem;
+            background: rgba(7, 15, 24, 0.7);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid var(--panel-border);
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .brand-logo {
+            width: 42px;
+            height: 42px;
+            background: #fff;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            color: #070f18;
+            box-shadow: 0 0 15px var(--accent-glow);
+        }
+
+        .brand-text h1 {
+            font-size: 1.1rem;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            font-weight: 700;
+        }
+
+        .brand-text span {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .system-status {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.8rem;
+            background: rgba(255, 255, 255, 0.04);
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            border: 1px solid var(--panel-border);
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            background-color: var(--success);
+            border-radius: 50%;
+            box-shadow: 0 0 8px var(--success);
+            animation: pulse 2s infinite;
+        }
+
+        /* --- MAIN CONTAINER --- */
+        main {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+            position: relative;
+            z-index: 5;
+        }
+
+        /* --- SCREEN 1: LOGIN PORTAL --- */
+        .portal-card {
+            background: var(--panel-bg);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid var(--panel-border);
+            padding: 3.5rem 4rem;
+            border-radius: 24px;
+            text-align: center;
+            max-width: 500px;
+            width: 100%;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.4);
+            transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .portal-card h2 {
+            font-size: 2rem;
+            letter-spacing: 2px;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+        }
+
+        .portal-card p {
+            color: var(--text-muted);
+            font-size: 0.95rem;
+            margin-bottom: 2.5rem;
+        }
+
+        .btn-access {
+            background: linear-gradient(135deg, #0052d4 0%, #0072ff 50%, #00c6ff 100%);
+            color: white;
+            border: none;
+            padding: 1.1rem 2.5rem;
+            font-size: 1rem;
+            font-weight: 600;
+            border-radius: 12px;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.75rem;
+            box-shadow: 0 8px 25px var(--accent-glow);
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .btn-access:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 30px rgba(0, 114, 255, 0.6);
+        }
+
+        .btn-access svg {
+            transition: transform 0.3s ease;
+        }
+
+        .btn-access:hover svg {
+            transform: translateX(4px);
+        }
+
+        /* --- SCREEN 2: DASHBOARD (HIDDEN BY DEFAULT) --- */
+        .dashboard-container {
+            display: none;
+            width: 100%;
+            max-width: 1300px;
+            grid-template-columns: 1fr 380px;
+            gap: 2rem;
+            opacity: 0;
+            transform: translateY(20px);
+            transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .dashboard-container.active {
+            display: grid;
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .tools-section h3 {
+            font-size: 1.3rem;
+            margin-bottom: 1.5rem;
+            letter-spacing: 1px;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            color: var(--text-muted);
+        }
+
+        .grid-links {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 1.25rem;
+        }
+
+        .link-card {
+            background: var(--panel-bg);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid var(--panel-border);
+            padding: 1.5rem;
+            border-radius: 16px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            height: 160px;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .link-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, rgba(0, 114, 255, 0.1) 0%, transparent 100%);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .link-card:hover {
+            transform: translateY(-4px);
+            border-color: rgba(0, 114, 255, 0.4);
+            box-shadow: 0 12px 24px rgba(0, 0, 0, 0.2);
+        }
+
+        .link-card:hover::before {
+            opacity: 1;
+        }
+
+        .card-meta {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            z-index: 2;
+        }
+
+        .badge-entity {
+            font-size: 0.7rem;
+            font-family: 'JetBrains Mono', monospace;
+            background: rgba(255, 255, 255, 0.06);
+            padding: 0.25rem 0.6rem;
+            border-radius: 4px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            color: var(--text-muted);
+        }
+
+        .card-icon-arrow {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.04);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-muted);
+            transition: all 0.3s ease;
+        }
+
+        .link-card:hover .card-icon-arrow {
+            background: var(--accent-color);
+            color: white;
+            box-shadow: 0 0 10px var(--accent-glow);
+        }
+
+        .card-details {
+            z-index: 2;
+        }
+
+        .card-details h4 {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 0.4rem;
+        }
+
+        .card-details p {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+
+        /* --- SIDEBAR ENTITIES --- */
+        .entities-sidebar {
+            background: rgba(7, 15, 24, 0.4);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--panel-border);
+            border-radius: 20px;
+            padding: 2rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        .sidebar-title {
+            font-size: 0.95rem;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            color: var(--text-muted);
+            font-weight: 600;
+            border-bottom: 1px solid var(--panel-border);
+            padding-bottom: 0.75rem;
+        }
+
+        .entity-row {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 1rem;
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid var(--panel-border);
+            border-radius: 12px;
+            transition: background 0.3s ease;
+        }
+
+        .entity-row:hover {
+            background: rgba(255, 255, 255, 0.04);
+        }
+
+        .entity-logo-frame {
+            width: 48px;
+            height: 48px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 0.9rem;
+            color: var(--accent-color);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .entity-info h5 {
+            font-size: 0.9rem;
+            font-weight: 600;
+            margin-bottom: 0.15rem;
+        }
+
+        .entity-info p {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+
+        /* --- FOOTER --- */
+        footer {
+            position: relative;
+            z-index: 10;
+            text-align: center;
+            padding: 1.5rem;
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            border-top: 1px solid var(--panel-border);
+            background: rgba(7, 15, 24, 0.5);
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        /* --- ANIMATIONS --- */
+        @keyframes pulse {
+            0% {
+                transform: scale(0.95);
+                box-shadow: 0 0 0 0 rgba(0, 230, 118, 0.7);
+            }
+
+            70% {
+                transform: scale(1);
+                box-shadow: 0 0 0 6px rgba(0, 230, 118, 0);
+            }
+
+            100% {
+                transform: scale(0.95);
+                box-shadow: 0 0 0 0 rgba(0, 230, 118, 0);
+            }
+        }
+
+        /* Responsive Optimization */
+        @media (max-width: 968px) {
+            .dashboard-container {
+                grid-template-columns: 1fr;
+            }
+
+            header {
+                padding: 1rem 1.5rem;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="bg-lines"></div>
+    <div class="bg-glow"></div>
+
+    <header>
+        <div class="brand">
+            <div class="brand-logo">🕵️‍♂️</div>
+            <div class="brand-text">
+                <h1>HERRAMIENTAS OSINT</h1>
+                <span>INFORMACION PUBLICA</span>
+            </div>
+        </div>
+        <div class="system-status">
+            <div class="status-dot"></div>
+            <span>PUBLICO OSINT // ACTIVE</span>
+        </div>
+    </header>
+
+    <main>
+        <div class="portal-card" id="loginCard">
+            <h2>ACCESO A LA WEB</h2>
+            <p>Módulo de Consultas de Fuentes Abiertas</p>
+            <button class="btn-access" onclick="enterDashboard()">
+                Iniciar Sesión
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                    stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="5" y1="12" x2="19" y2="12"></line>
+                    <polyline points="12 5 19 12 12 19"></polyline>
+                </svg>
+            </button>
+        </div>
+
+        <div class="dashboard-container" id="dashboardView">
+
+            <section class="tools-section">
+                <h3>
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                        stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path>
+                        <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path>
+                    </svg>
+                    Enlaces y Plataformas
+                </h3>
+
+                <div class="grid-links">
+
+                    <div class="link-card"
+                        onclick="window.open('https://www.gestiondefiscalias.gob.ec/siaf/informacion/web/noticiasdelito/index.php', '_blank')">
+                        <div class="card-meta">
+                            <span class="badge-entity">FISCALIA</span>
+                            <div class="card-icon-arrow">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="2.5">
+                                    <line x1="7" y1="17" x2="17" y2="7"></line>
+                                    <polyline points="7 7 17 7 17 17"></polyline>
+                                </svg>
+                            </div>
+                        </div>
+                        <div class="card-details">
+                            <h4>Consulta de Denuncias</h4>
+                            <p>MÓDULO DE INFORMACIÓN
+                                NOTICIAS DE DELITO</p>
+                        </div>
+                    </div>
+
+                    <div class="link-card"
+                        onclick="window.open('https://procesosjudiciales.funcionjudicial.gob.ec/busqueda-filtros', '_blank')">
+                        <div class="card-meta">
+                            <span class="badge-entity">JUDICATURA</span>
+                            <div class="card-icon-arrow">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="2.5">
+                                    <line x1="7" y1="17" x2="17" y2="7"></line>
+                                    <polyline points="7 7 17 7 17 17"></polyline>
+                                </svg>
+                            </div>
+                        </div>
+                        <div class="card-details">
+                            <h4>Sistema SATJE</h4>
+                            <p>Búsqueda de causas penales, civiles y antecedentes de procesos judiciales.</p>
+                        </div>
+                    </div>
+
+                    <div class="link-card"
+                        onclick="window.open('https://consultaweb.ant.gob.ec/PortalWEB/paginas/clientes/clp_criterio_consulta.jsp', '_blank')">
+                        <div class="card-meta">
+                            <span class="badge-entity">ANT</span>
+                            <div class="card-icon-arrow">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="2.5">
+                                    <line x1="7" y1="17" x2="17" y2="7"></line>
+                                    <polyline points="7 7 17 7 17 17"></polyline>
+                                </svg>
+                            </div>
+                        </div>
+                        <div class="card-details">
+                            <h4>Consulta Vehicular</h4>
+                            <p>Información de datos de automotores, propietarios y citaciones de tránsito.</p>
+                        </div>
+                    </div>
+
+                    <div class="link-card"
+                        onclick="window.open('https://srienlinea.sri.gob.ec/sri-en-linea/SriPagosWeb/ConsultaDeudasFirmesImpugnadas/Consultas/consultaDeudasFirmesImpugnadas', '_blank')">
+                        <div class="card-meta">
+                            <span class="badge-entity">DATOS SRI</span>
+                            <div class="card-icon-arrow">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="2.5">
+                                    <line x1="7" y1="17" x2="17" y2="7"></line>
+                                    <polyline points="7 7 17 7 17 17"></polyline>
+                                </svg>
+                            </div>
+                        </div>
+                        <div class="card-details">
+                            <h4>Validación de Identidad</h4>
+                            <p>Consulta de datoS de ciudadanos Por nombres</p>
+                        </div>
+                    </div>
+
+                    <div class="link-card"
+                        onclick="window.open('https://consultas.funcionjudicial.gob.ec/informacionjudicialindividual/pages/index.jsf#!/', '_blank')">
+                        <div class="card-meta">
+                            <span class="badge-entity">SRI</span>
+                            <div class="card-icon-arrow">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="2.5">
+                                    <line x1="7" y1="17" x2="17" y2="7"></line>
+                                    <polyline points="7 7 17 7 17 17"></polyline>
+                                </svg>
+                            </div>
+                        </div>
+                        <div class="card-details">
+                            <h4>JUDICATURA </h4>
+                            <p>SENTENCIAS Y RESOLUCIONES</p>
+                        </div>
+                    </div>
+
+                    <div class="link-card" onclick="window.open('https://ecuadorpapers.org/', '_blank')">
+                        <div class="card-meta">
+                            <span class="badge-entity">SUPERCIAS</span>
+                            <div class="card-icon-arrow">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="2.5">
+                                    <line x1="7" y1="17" x2="17" y2="7"></line>
+                                    <polyline points="7 7 17 7 17 17"></polyline>
+                                </svg>
+                            </div>
+                        </div>
+                        <div class="card-details">
+                            <h4>EMPRESAS</h4>
+                            <p>Almacena documentos de registro de empresas de Ecuador</p>
+                        </div>
+
+                    </div>
+                    <div class="link-card" onclick="window.open('https://osintframework.com/', '_blank')">
+                        <div class="card-meta">
+                            <span class="badge-entity">RED</span>
+                            <div class="card-icon-arrow">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="2.5">
+                                    <line x1="7" y1="17" x2="17" y2="7"></line>
+                                    <polyline points="7 7 17 7 17 17"></polyline>
+                                </svg>
+                            </div>
+                        </div>
+                        <div class="card-details">
+                            <h4>OSINT </h4>
+                            <p>MAS LINK MUNDIALES</p>
+                        </div>
+                    </div>
+                    
+                    <div class="link-card" onclick="window.open('https://micnt.com.ec/cntapp/guia104/php/guia_cntat.php?hflagsubmit=0&cmbcriterio=3&cmbprov2=17&txtdueno=0602280182&captchaSelection=', '_blank')">
+                        <div class="card-meta">
+                            <span class="badge-entity">GUIA</span>
+                            <div class="card-icon-arrow">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="2.5">
+                                    <line x1="7" y1="17" x2="17" y2="7"></line>
+                                    <polyline points="7 7 17 7 17 17"></polyline>
+                                </svg>
+                            </div>
+                        </div>
+                        <div class="card-details">
+                            <h4>GUIA CNT </h4>
+                            <p>GUIA TELEFONICA ECUADOR</p>
+                        </div>
+                    </div>
+
+                </div>
+            </section>
+
+            <aside class="entities-sidebar">
+                <div class="sidebar-title">Interconexión Institucional</div>
+
+                <div class="entity-row">
+                    <div class="entity-logo-frame">FGE</div>
+                    <div class="entity-info">
+                        <h5>Fiscalía General</h5>
+                        <p>Estado del Estado Ecuatoriano</p>
+                    </div>
+                </div>
+
+                <div class="entity-row">
+                    <div class="entity-logo-frame">CJ</div>
+                    <div class="entity-info">
+                        <h5>Consejo de la Judicatura</h5>
+                        <p>Transparencia Judicial</p>
+                    </div>
+                </div>
+
+                <div class="link-card" onclick="window.open('https://www.instagram.com/gadquimiag?igsh=NGJ0dGJwOGprOGR4', '_blank')">
+                        <div class="card-meta">
+                            <span class="badge-entity">INFO</span>
+                            <div class="card-icon-arrow">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="2.5">
+                                    <line x1="7" y1="17" x2="17" y2="7"></line>
+                                    <polyline points="7 7 17 7 17 17"></polyline>
+                                </svg>
+                            </div>
+                        </div>
+                        <div class="card-details">
+                            <h4>LINK </h4>
+                            <p>MAS INFORMACION</p>
+                        </div>
+                    </div>
+                
+                <div style="position: relative; width: 100%; height: 0; padding-top: 56.2500%;
+ padding-bottom: 0; box-shadow: 0 2px 8px 0 rgba(63,69,81,0.16); margin-top: 1.6em; margin-bottom: 0.9em; overflow: hidden;
+ border-radius: 8px; will-change: transform;">
+  <iframe loading="lazy" style="position: absolute; width: 100%; height: 100%; top: 0; left: 0; border: none; padding: 0;margin: 0;"
+    src="https://www.canva.com/design/DAHKaE99H5Y/cVPrnlMvdXitRQvqDripmg/view?embed" allowfullscreen="allowfullscreen" allow="fullscreen">
+  </iframe>
+</div>
+<a href="https:&#x2F;&#x2F;www.canva.com&#x2F;design&#x2F;DAHKaE99H5Y&#x2F;cVPrnlMvdXitRQvqDripmg&#x2F;view?utm_content=DAHKaE99H5Y&amp;utm_campaign=designshare&amp;utm_medium=embeds&amp;utm_source=link" target="_blank" rel="noopener">DATOS</a> de Jhonatan Guaman
+                
+                VISITAS
+                <div id="sfcywc46tdncpmu9qed23qx3ptm58rd41kn"></div>
+                <script type="text/javascript"
+                    src="https://counter1.optistats.ovh/private/counter.js?c=ywc46tdncpmu9qed23qx3ptm58rd41kn&down=async"
+                    async></script><noscript><a href="https://www.contadorvisitasgratis.com"
+                        title="contador de visitas gratis"><img
+                            src="https://counter1.optistats.ovh/private/contadorvisitasgratis.php?c=ywc46tdncpmu9qed23qx3ptm58rd41kn"
+                            border="0" title="contador de visitas gratis"
+                            alt="contador de visitas gratis"></a></noscript>
+            </aside>
+
+        </div>
+    </main>
+
+    <footer>
+        EC &copy; 2026 // MÓDULO DE INTELIGENCIA DE FUENTES ABIERTAS (OSINT)
+    </footer>
+
+    <script>
+        function enterDashboard() {
+            const loginCard = document.getElementById('loginCard');
+            const dashboardView = document.getElementById('dashboardView');
+
+            // Transición fluida de salida del Login
+            loginCard.style.opacity = '0';
+            loginCard.style.transform = 'scale(0.95)';
+
+            setTimeout(() => {
+                loginCard.style.display = 'none';
+
+                // Transición fluida de entrada del Dashboard
+                dashboardView.classList.add('active');
+            }, 400);
+        }
+    </script>
+</body>
+
+</html>
